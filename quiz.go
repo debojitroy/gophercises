@@ -5,15 +5,20 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"io/ioutil"
+	"log"
+	"os"
 	"strings"
+	"time"
 )
 
 func main() {
-	fmt.Println("Quiz game...")
 	loadFile := flag.String("file", "payload.csv", "CSV File with input")
+	timeout := flag.Int("timeout", 30, "Timeout for the game")
 	flag.Parse()
+
+	fmt.Println("Welcome to the Quiz Game")
+	fmt.Println("Timeout for the game is: ", *timeout)
 
 	fmt.Println("Input Filename: ", *loadFile)
 
@@ -22,7 +27,7 @@ func main() {
 		fmt.Println("Failed to open file: ", err)
 		panic(err)
 	}
-    
+
 	csvReader := csv.NewReader(strings.NewReader(string(fileData)))
 	dataArray := make([][]string, 0, 1)
 
@@ -40,9 +45,21 @@ func main() {
 	}
 
 	correct := 0
-	wrong :=0
+	wrong := 0
 
-	for i:=0; i < len(dataArray); i++ {
+	fmt.Println("Press Enter to start....")
+	fmt.Scanln()
+
+	timer := time.NewTimer(time.Duration(*timeout) * time.Second)
+	go func() {
+		<-timer.C
+		fmt.Println("Time up !!!")
+		fmt.Println("Correct: ", correct)
+		fmt.Println("Wrong: ", wrong)
+		os.Exit(0)
+	}()
+
+	for i := 0; i < len(dataArray); i++ {
 		fmt.Println(dataArray[i][0])
 		var answer string
 		fmt.Scanln(&answer)
@@ -54,6 +71,7 @@ func main() {
 		}
 	}
 
+	timer.Stop()
 	fmt.Println("Correct: ", correct)
 	fmt.Println("Wrong: ", wrong)
 }
